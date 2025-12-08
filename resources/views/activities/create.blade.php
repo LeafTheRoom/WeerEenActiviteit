@@ -104,17 +104,6 @@
                     </form>
                 </div>
             </div>
-
-            <!-- Info box -->
-            <div class="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h3 class="font-semibold text-blue-900 mb-2">Tips voor je activiteit</h3>
-                <ul class="text-sm text-blue-800 space-y-1">
-                    <li>Stel realistische weereisen in voor betere matches</li>
-                    <li>Een lagere max. neerslag (0-2mm) geeft meer geschikte dagen</li>
-                    <li>Windsnelheid is vooral belangrijk voor zeilen en fietsen</li>
-                    <li>De app checkt automatisch het weer en geeft je meldingen</li>
-                </ul>
-            </div>
         </div>
     </div>
 </x-app-layout>

@@ -90,17 +90,7 @@
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
-
-                        <!-- Actief Status -->
-                        <div class="mb-4">
-                            <label class="flex items-center">
-                                <input type="checkbox" name="is_active" value="1" 
-                                       {{ old('is_active', $activity->is_active) ? 'checked' : '' }}
-                                       class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
-                                <span class="ml-2 text-sm text-gray-600">Activiteit is actief</span>
-                            </label>
-                        </div>
-
+                        
                         <!-- Buttons -->
                         <div class="flex justify-end gap-2">
                             <a href="{{ route('activities.show', $activity) }}" 
