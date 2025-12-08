@@ -14,7 +14,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     
     // Activities
-    Route::resource('activities', ActivityController::class)->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
+    Route::resource('activities', ActivityController::class)->only(['index', 'create', 'store', 'show', 'edit', 'update', 'destroy']);
     
     // Profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
