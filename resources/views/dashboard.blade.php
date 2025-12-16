@@ -42,7 +42,7 @@
             <!-- Mijn Activiteiten -->
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6">
-                    <h3 class="text-lg font-semibold mb-4">Mijn Activiteiten</h3>
+                    <h3 class="text-lg font-semibold mb-4">Recenste toegevoegde activiteit</h3>
                     
                     @if($activities->count() > 0)
                         <div class="space-y-3">
