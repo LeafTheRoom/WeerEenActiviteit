@@ -4,11 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Models\Activity;
 use App\Models\ActivityMatch;
+use App\Services\WeatherService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
+    public function __construct(
+        private WeatherService $weatherService
+    ) {}
+
     /**
      * Show the dashboard.
      */
@@ -45,5 +50,30 @@ class DashboardController extends Controller
         ];
 
         return view('dashboard', compact('activities', 'upcomingMatches', 'stats'));
+    }
+
+    /**
+     * Update weather data from OpenWeatherMap API.
+     */
+    public function updateWeather(Request $request)
+    {
+        try {
+            $location = $request->input('location');
+            
+            // Fetch fresh weather data
+            $forecasts = $this->weatherService->fetchForecast($location);
+            
+            if (empty($forecasts)) {
+                return redirect()->back()->with('error', 'Kon weergegevens niet ophalen. Controleer je API-sleutel.');
+            }
+            
+            // Find activity matches
+            $matchCount = $this->weatherService->findActivityMatches();
+            
+            return redirect()->back()->with('success', "Weer bijgewerkt! {$matchCount} geschikte matches gevonden.");
+            
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Er ging iets mis: ' . $e->getMessage());
+        }
     }
 }

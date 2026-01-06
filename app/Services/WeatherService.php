@@ -5,45 +5,88 @@ namespace App\Services;
 use App\Models\WeatherForecast;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
 
 class WeatherService
 {
     private string $apiKey;
     private string $baseUrl;
+    private string $defaultLocation;
+    private string $defaultCountry;
 
     public function __construct()
     {
-        // Voor nu gebruiken we OpenWeatherMap API
-        // Je kunt ook Buienradar API gebruiken
-        $this->apiKey = env('WEATHER_API_KEY', '');
-        $this->baseUrl = 'https://api.openweathermap.org/data/2.5';
+        $this->apiKey = config('weather.api_key');
+        $this->baseUrl = config('weather.api_url');
+        $this->defaultLocation = config('weather.default_location');
+        $this->defaultCountry = config('weather.default_country');
     }
 
     /**
      * Haal weersvoorspelling op voor de komende dagen.
      */
-    public function fetchForecast(string $location = 'Amsterdam', int $days = 5): array
+    public function fetchForecast(string $location = null, int $days = null): array
     {
+        // Use defaults if not provided
+        $location = $location ?? $this->defaultLocation;
+        $days = $days ?? config('weather.forecast_days', 5);
+        
+        // Check if API key is configured
+        if (empty($this->apiKey)) {
+            Log::warning('Weather API key not configured, using dummy data');
+            return $this->generateDummyForecast($days);
+        }
+
+        // Try to get from cache first
+        $cacheKey = "weather_forecast_{$location}_{$days}";
+        
+        if (config('weather.cache_enabled') && Cache::has($cacheKey)) {
+            Log::info('Using cached weather data', ['location' => $location]);
+            return Cache::get($cacheKey);
+        }
+
         try {
-            $response = Http::get("{$this->baseUrl}/forecast", [
-                'q' => $location . ',NL',
+            $response = Http::timeout(10)->get("{$this->baseUrl}/forecast", [
+                'q' => $location . ',' . $this->defaultCountry,
                 'appid' => $this->apiKey,
-                'units' => 'metric', // Voor Celsius
-                'lang' => 'nl',
+                'units' => config('weather.units', 'metric'),
+                'lang' => config('weather.language', 'nl'),
                 'cnt' => $days * 8, // 8 metingen per dag (elke 3 uur)
             ]);
 
             if ($response->successful()) {
-                return $this->parseForecastData($response->json());
+                $forecasts = $this->parseForecastData($response->json());
+                
+                // Cache the results
+                if (config('weather.cache_enabled')) {
+                    Cache::put($cacheKey, $forecasts, config('weather.cache_duration', 1800));
+                }
+                
+                Log::info('Weather data fetched successfully', [
+                    'location' => $location,
+                    'count' => count($forecasts)
+                ]);
+                
+                return $forecasts;
             }
 
-            Log::error('Weather API error', ['response' => $response->body()]);
-            return [];
+            Log::error('Weather API error', [
+                'status' => $response->status(),
+                'response' => $response->body()
+            ]);
+            
+            // Fallback to dummy data on error
+            return $this->generateDummyForecast($days);
 
         } catch (\Exception $e) {
-            Log::error('Weather fetch failed', ['error' => $e->getMessage()]);
-            return [];
+            Log::error('Weather fetch failed', [
+                'error' => $e->getMessage(),
+                'location' => $location
+            ]);
+            
+            // Fallback to dummy data on exception
+            return $this->generateDummyForecast($days);
         }
     }
 
@@ -58,19 +101,29 @@ class WeatherService
             return $forecasts;
         }
 
+        $location = $data['city']['name'] ?? $this->defaultLocation;
+
         foreach ($data['list'] as $item) {
             $datetime = Carbon::createFromTimestamp($item['dt']);
+            
+            // Extract precipitation data (rain or snow)
+            $precipitation = 0;
+            if (isset($item['rain']['3h'])) {
+                $precipitation = $item['rain']['3h'];
+            } elseif (isset($item['snow']['3h'])) {
+                $precipitation = $item['snow']['3h'];
+            }
             
             $forecast = WeatherForecast::updateOrCreate(
                 [
                     'forecast_date' => $datetime->toDateString(),
                     'forecast_time' => $datetime->format('H:i:s'),
-                    'location' => $data['city']['name'] ?? 'Nederland',
+                    'location' => $location,
                 ],
                 [
-                    'temperature' => $item['main']['temp'],
-                    'wind_speed' => ($item['wind']['speed'] ?? 0) * 3.6, // m/s naar km/h
-                    'precipitation' => $item['rain']['3h'] ?? 0,
+                    'temperature' => round($item['main']['temp'], 2),
+                    'wind_speed' => round(($item['wind']['speed'] ?? 0) * 3.6, 2), // m/s naar km/h
+                    'precipitation' => round($precipitation, 2),
                     'humidity' => $item['main']['humidity'] ?? null,
                     'condition' => $item['weather'][0]['main'] ?? null,
                     'description' => $item['weather'][0]['description'] ?? null,

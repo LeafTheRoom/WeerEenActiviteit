@@ -13,6 +13,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     
+    // Weather update
+    Route::post('/weather/update', [DashboardController::class, 'updateWeather'])->name('weather.update');
+    
     // Activities
     Route::resource('activities', ActivityController::class)->only(['index', 'create', 'store', 'show', 'edit', 'update', 'destroy']);
     
