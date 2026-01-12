@@ -35,6 +35,19 @@
                             @enderror
                         </div>
 
+                        <!-- Locatie -->
+                        <div class="mb-4">
+                            <label for="location" class="block text-sm font-medium text-gray-700">Locatie *</label>
+                            <input type="text" name="location" id="location" required
+                                   value="{{ old('location', 'Amsterdam') }}"
+                                   placeholder="bijv. Amsterdam, Rotterdam, Utrecht"
+                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <p class="mt-1 text-sm text-gray-500">Vul de stad in waar je deze activiteit wilt doen</p>
+                            @error('location')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
                         <!-- Temperatuur -->
                         <div class="grid grid-cols-2 gap-4 mb-4">
                             <div>

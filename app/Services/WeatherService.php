@@ -178,10 +178,14 @@ class WeatherService
     public function findActivityMatches(): int
     {
         $activities = \App\Models\Activity::where('is_active', true)->get();
-        $forecasts = WeatherForecast::upcoming()->get();
         $matchCount = 0;
 
         foreach ($activities as $activity) {
+            // Haal alleen weersvoorspellingen op voor de locatie van deze activiteit
+            $forecasts = WeatherForecast::upcoming()
+                ->where('location', $activity->location)
+                ->get();
+
             foreach ($forecasts as $forecast) {
                 $isSuitable = $activity->matchesWeather($forecast);
                 $score = $activity->calculateMatchScore($forecast);

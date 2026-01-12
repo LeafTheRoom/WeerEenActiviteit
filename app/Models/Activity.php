@@ -15,6 +15,7 @@ class Activity extends Model
         'user_id',
         'name',
         'description',
+        'location',
         'min_temperature',
         'max_temperature',
         'max_wind_speed',

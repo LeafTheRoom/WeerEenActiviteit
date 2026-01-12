@@ -43,6 +43,7 @@ class ActivityController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'location' => 'required|string|max:255',
             'min_temperature' => 'nullable|numeric|min:-50|max:50',
             'max_temperature' => 'nullable|numeric|min:-50|max:50',
             'max_wind_speed' => 'nullable|numeric|min:0|max:200',
@@ -55,8 +56,11 @@ class ActivityController extends Controller
         $user = Auth::user();
         $activity = $user->activities()->create($validated);
 
-        // Check weer matches
+        // Haal weergegevens op voor de locatie van deze activiteit
         $weatherService = new WeatherService();
+        $weatherService->fetchForecast($activity->location);
+        
+        // Check weer matches
         $weatherService->findActivityMatches();
 
         return redirect()->route('dashboard')
@@ -83,6 +87,7 @@ class ActivityController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'location' => 'required|string|max:255',
             'min_temperature' => 'nullable|numeric|min:-50|max:50',
             'max_temperature' => 'nullable|numeric|min:-50|max:50',
             'max_wind_speed' => 'nullable|numeric|min:0|max:200',
@@ -94,8 +99,11 @@ class ActivityController extends Controller
 
         $activity->update($validated);
 
-        // Re-check weer matches
+        // Haal weergegevens op voor de (mogelijk gewijzigde) locatie
         $weatherService = new WeatherService();
+        $weatherService->fetchForecast($activity->location);
+        
+        // Re-check weer matches
         $weatherService->findActivityMatches();
 
         return redirect()->route('dashboard')
