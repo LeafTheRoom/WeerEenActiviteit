@@ -24,7 +24,6 @@ class WeatherForecast extends Model
 
     protected $casts = [
         'forecast_date' => 'date',
-        'forecast_time' => 'datetime',
         'temperature' => 'decimal:2',
         'wind_speed' => 'decimal:2',
         'precipitation' => 'decimal:2',

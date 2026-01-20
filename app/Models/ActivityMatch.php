@@ -23,7 +23,6 @@ class ActivityMatch extends Model
 
     protected $casts = [
         'match_date' => 'date',
-        'match_time' => 'datetime',
         'is_suitable' => 'boolean',
         'user_notified' => 'boolean',
     ];

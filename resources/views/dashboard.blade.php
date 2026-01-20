@@ -88,11 +88,15 @@
                                                 $bestMatch = $activity->getBestMatchDate();
                                             @endphp
                                             @if($bestMatch)
+                                                @php
+                                                    $startTime = \Carbon\Carbon::parse($bestMatch['time']);
+                                                    $endTime = $startTime->copy()->addHours($activity->duration_hours);
+                                                @endphp
                                                 <div class="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
                                                     <div class="text-sm font-semibold text-green-800">Geschikte Dag Gevonden!</div>
                                                     <div class="text-sm text-green-700 mt-1">
                                                         <span class="font-medium">{{ \Carbon\Carbon::parse($bestMatch['date'])->isoFormat('dddd D MMMM YYYY') }}</span>
-                                                        om {{ \Carbon\Carbon::parse($bestMatch['time'])->format('H:i') }} uur
+                                                        van {{ $startTime->format('H:i') }} tot {{ $endTime->format('H:i') }} uur ({{ $activity->duration_hours }} {{ $activity->duration_hours == 1 ? 'uur' : 'uren' }})
                                                     </div>
                                                     @if($bestMatch['weather'])
                                                         <div class="text-xs text-green-600 mt-1">

@@ -62,20 +62,44 @@ class DashboardController extends Controller
         try {
             $location = $request->input('location');
             
+            \Log::info('Weather update initiated', [
+                'location' => $location,
+                'user_id' => Auth::id()
+            ]);
+            
             // Fetch fresh weather data
             $forecasts = $this->weatherService->fetchForecast($location);
             
             if (empty($forecasts)) {
-                return redirect()->back()->with('error', 'Kon weergegevens niet ophalen. Controleer je API-sleutel.');
+                \Log::warning('No weather forecasts returned', ['location' => $location]);
+                return redirect()->back()->with('error', 'Kon weergegevens niet ophalen. Controleer je API-sleutel en internetverbinding.');
             }
+            
+            \Log::info('Weather data fetched', [
+                'forecast_count' => count($forecasts),
+                'location' => $location
+            ]);
             
             // Find activity matches
             $matchCount = $this->weatherService->findActivityMatches();
             
-            return redirect()->back()->with('success', "Weer bijgewerkt! {$matchCount} geschikte matches gevonden.");
+            \Log::info('Activity matching complete', [
+                'match_count' => $matchCount,
+                'forecast_count' => count($forecasts)
+            ]);
+            
+            $message = "✅ Weer bijgewerkt! {$matchCount} geschikte matches gevonden voor " . count($forecasts) . " weersvoorspellingen.";
+            
+            return redirect()->back()->with('success', $message);
             
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Er ging iets mis: ' . $e->getMessage());
+            \Log::error('Weather update failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'location' => $request->input('location')
+            ]);
+            
+            return redirect()->back()->with('error', 'Er ging iets mis bij het updaten: ' . $e->getMessage());
         }
     }
 }

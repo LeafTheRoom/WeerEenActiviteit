@@ -107,14 +107,6 @@
                                     </div>
                                 </div>
 
-                                @if($activity->matches_count > 0)
-                                    <div class="mb-4 text-sm">
-                                        <span class="text-gray-600">Matches: </span>
-                                        <span class="font-medium text-green-600">{{ $activity->suitable_matches_count }}</span>
-                                        <span class="text-gray-400"> / {{ $activity->matches_count }}</span>
-                                    </div>
-                                @endif
-
                                 <div class="flex gap-2">
                                     <a href="{{ route('activities.edit', $activity) }}" 
                                        class="flex-1 text-center px-3 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 text-sm">

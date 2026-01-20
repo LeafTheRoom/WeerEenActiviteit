@@ -90,7 +90,7 @@
             </div>
             <div class="info-row">
                 <span class="label">Tijd:</span>
-                <span class="value">{{ $matchTime }} uur</span>
+                <span class="value">{{ $matchTime }} - {{ $endTime ?? $matchTime }} uur</span>
             </div>
             <div class="info-row">
                 <span class="label">Locatie:</span>

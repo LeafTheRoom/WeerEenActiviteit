@@ -4,6 +4,7 @@ namespace App\Notifications;
 
 use App\Models\ActivityMatch;
 use App\Mail\MyAppMail;
+use App\Notifications\Channels\SafeMailChannel;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -28,7 +29,8 @@ class ActivityMatchFound extends Notification implements ShouldQueue
      */
     public function via(object $notifiable): array
     {
-        return ['mail', 'database'];
+        // Altijd database, en probeer mail via safe channel
+        return [SafeMailChannel::class, 'database'];
     }
 
     /**
@@ -36,36 +38,52 @@ class ActivityMatchFound extends Notification implements ShouldQueue
      */
     public function toMail(object $notifiable): MailMessage
     {
-        $activity = $this->match->activity;
-        $weather = $this->match->weatherForecast;
-        $matchDate = Carbon::parse($this->match->match_date);
-        $matchTime = Carbon::parse($this->match->match_time);
+        try {
+            $activity = $this->match->activity;
+            $weather = $this->match->weatherForecast;
+            $matchDate = Carbon::parse($this->match->match_date);
+            $matchTime = Carbon::parse($this->match->match_time);
+            $endTime = $matchTime->copy()->addHours($activity->duration_hours);
 
-        return (new MailMessage)
-            ->subject('Geschikte dag voor: ' . $activity->name)
-            ->markdown('emails.activity-match', [
-                'userName' => $notifiable->name,
-                'activityName' => $activity->name,
-                'matchDate' => $matchDate->isoFormat('dddd D MMMM YYYY'),
-                'matchTime' => $matchTime->format('H:i'),
-                'location' => $activity->location,
-                'duration' => $activity->duration_hours,
-                
-                // Wensen van de gebruiker
-                'minTemperature' => $activity->min_temperature,
-                'maxTemperature' => $activity->max_temperature,
-                'maxWindSpeed' => $activity->max_wind_speed,
-                'maxPrecipitation' => $activity->max_precipitation,
-                'preferredTimes' => $activity->preferred_times ?? [],
-                
-                // Weersverwachting
-                'weatherTemperature' => $weather->temperature,
-                'weatherWindSpeed' => $weather->wind_speed,
-                'weatherPrecipitation' => $weather->precipitation,
-                'weatherDescription' => $weather->description,
-                
-                'dashboardUrl' => url('/dashboard'),
+            return (new MailMessage)
+                ->subject('Geschikte dag voor: ' . $activity->name)
+                ->markdown('emails.activity-match', [
+                    'userName' => $notifiable->name,
+                    'activityName' => $activity->name,
+                    'matchDate' => $matchDate->isoFormat('dddd D MMMM YYYY'),
+                    'matchTime' => $matchTime->format('H:i'),
+                    'endTime' => $endTime->format('H:i'),
+                    'location' => $activity->location,
+                    'duration' => $activity->duration_hours,
+                    
+                    // Wensen van de gebruiker
+                    'minTemperature' => $activity->min_temperature,
+                    'maxTemperature' => $activity->max_temperature,
+                    'maxWindSpeed' => $activity->max_wind_speed,
+                    'maxPrecipitation' => $activity->max_precipitation,
+                    'preferredTimes' => $activity->preferred_times ?? [],
+                    
+                    // Weersverwachting
+                    'weatherTemperature' => $weather->temperature,
+                    'weatherWindSpeed' => $weather->wind_speed,
+                    'weatherPrecipitation' => $weather->precipitation,
+                    'weatherDescription' => $weather->description,
+                    
+                    'dashboardUrl' => url('/dashboard'),
+                ]);
+        } catch (\Exception $e) {
+            \Log::error('Failed to generate email notification', [
+                'error' => $e->getMessage(),
+                'match_id' => $this->match->id
             ]);
+            
+            // Fallback naar simpele mail
+            return (new MailMessage)
+                ->subject('Nieuwe activiteit match gevonden')
+                ->line('Er is een geschikte dag gevonden voor je activiteit.')
+                ->action('Bekijk Details', url('/dashboard'))
+                ->line('Dank je wel!');
+        }
     }
 
     /**

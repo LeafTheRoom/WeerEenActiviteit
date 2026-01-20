@@ -60,6 +60,7 @@ class Activity extends Model
 
     /**
      * Check if weather conditions match activity requirements.
+     * This checks a single forecast point.
      */
     public function matchesWeather(WeatherForecast $forecast): bool
     {
@@ -77,8 +78,9 @@ class Activity extends Model
             return false;
         }
 
-        // Check precipitation
-        if ($forecast->precipitation > $this->max_precipitation) {
+        // Check precipitation - gebruik 0 als default als max_precipitation null is
+        $maxPrecip = $this->max_precipitation ?? 0;
+        if ($forecast->precipitation > $maxPrecip) {
             return false;
         }
 
@@ -86,9 +88,87 @@ class Activity extends Model
     }
 
     /**
-     * Calculate match score (0-100) based on how well weather fits.
+     * Check if weather is suitable for the entire duration of the activity.
+     * 
+     * @param WeatherForecast $startForecast De start forecast
+     * @param array $allForecasts Alle beschikbare forecasts voor de locatie
+     * @return bool True als het weer gedurende de hele duur geschikt is
      */
-    public function calculateMatchScore(WeatherForecast $forecast): int
+    public function matchesWeatherDuration(WeatherForecast $startForecast, array $allForecasts): bool
+    {
+        // Check de start forecast eerst
+        if (!$this->matchesWeather($startForecast)) {
+            return false;
+        }
+
+        // Als duur <= 3 uur, is één forecast voldoende (forecasts zijn per 3 uur)
+        if ($this->duration_hours <= 3) {
+            return true;
+        }
+
+        // Voor langere activiteiten, check alle forecasts in de duur periode
+        $startDateTime = \Carbon\Carbon::parse($startForecast->forecast_date->format('Y-m-d') . ' ' . $startForecast->forecast_time);
+        $endDateTime = $startDateTime->copy()->addHours($this->duration_hours);
+
+        // Filter forecasts die binnen de activiteit periode vallen
+        $relevantForecasts = array_filter($allForecasts, function($forecast) use ($startDateTime, $endDateTime) {
+            $forecastDateTime = \Carbon\Carbon::parse($forecast->forecast_date->format('Y-m-d') . ' ' . $forecast->forecast_time);
+            return $forecastDateTime->gte($startDateTime) && $forecastDateTime->lt($endDateTime);
+        });
+
+        // Alle relevante forecasts moeten aan de criteria voldoen
+        foreach ($relevantForecasts as $forecast) {
+            if (!$this->matchesWeather($forecast)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Calculate match score (0-100) based on how well weather fits.
+     * For activities longer than 3 hours, this averages scores across all forecast periods.
+     * 
+     * @param WeatherForecast $startForecast De start forecast
+     * @param array $allForecasts Alle beschikbare forecasts (optioneel, voor langere activiteiten)
+     * @return int Score tussen 0-100
+     */
+    public function calculateMatchScore(WeatherForecast $startForecast, array $allForecasts = []): int
+    {
+        // Voor korte activiteiten (<=3 uur), score alleen de start forecast
+        if ($this->duration_hours <= 3 || empty($allForecasts)) {
+            return $this->calculateSingleForecastScore($startForecast);
+        }
+
+        // Voor langere activiteiten, bereken gemiddelde score over de hele duur
+        $startDateTime = \Carbon\Carbon::parse($startForecast->forecast_date->format('Y-m-d') . ' ' . $startForecast->forecast_time);
+        $endDateTime = $startDateTime->copy()->addHours($this->duration_hours);
+
+        $relevantForecasts = array_filter($allForecasts, function($forecast) use ($startDateTime, $endDateTime) {
+            $forecastDateTime = \Carbon\Carbon::parse($forecast->forecast_date->format('Y-m-d') . ' ' . $forecast->forecast_time);
+            return $forecastDateTime->gte($startDateTime) && $forecastDateTime->lt($endDateTime);
+        });
+
+        if (empty($relevantForecasts)) {
+            return $this->calculateSingleForecastScore($startForecast);
+        }
+
+        // Bereken gemiddelde score
+        $totalScore = 0;
+        $count = 0;
+        foreach ($relevantForecasts as $forecast) {
+            $totalScore += $this->calculateSingleForecastScore($forecast);
+            $count++;
+        }
+
+        return $count > 0 ? (int)round($totalScore / $count) : 0;
+    }
+
+    /**
+     * Calculate score for a single forecast.
+     */
+    private function calculateSingleForecastScore(WeatherForecast $forecast): int
     {
         $score = 100;
 
