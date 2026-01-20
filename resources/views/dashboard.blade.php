@@ -75,8 +75,7 @@
                                                     <span class="font-medium">{{ $activity->min_temperature }}°C - {{ $activity->max_temperature }}°C</span>
                                                 </div>
                                                 <div>
-                                                    <span class="text-gray-500">Max. Wind:</span>
-                                                    <span class="font-medium">{{ $activity->max_wind_speed }} km/h</span>
+                                                    <span class="text-gray-500">Max. Wind:</span><span class="font-medium">{{ $activity->max_wind_speed }} km/h</span>
                                                 </div>
                                                 <div>
                                                     <span class="text-gray-500">Max. Neerslag:</span>

@@ -49,5 +49,19 @@ class MailTestController extends Controller
 
         return back()->with('success', 'Test mail verstuurd! Check je email.');
     }
+
+    public function sendTest()
+    {
+        try {
+            Mail::raw('Dit is een testmail van WeerEenActiviteit! 🎉', function ($message) {
+                $message->to('testerbram123@gmail.com')
+                        ->subject('Test Email van WeerEenActiviteit');
+            });
+
+            return 'Testmail verstuurd naar testerbram123@gmail.com! Check je inbox.';
+        } catch (\Exception $e) {
+            return 'Fout bij versturen: ' . $e->getMessage();
+        }
+    }
 }
 

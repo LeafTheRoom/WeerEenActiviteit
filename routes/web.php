@@ -36,6 +36,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Mail Testing (Development)
     Route::get('/mail/preview', [MailTestController::class, 'preview'])->name('mail.preview');
     Route::post('/mail/test', [MailTestController::class, 'send'])->name('mail.test.send');
+    Route::get('/mail/send-test', [MailTestController::class, 'sendTest'])->name('mail.sendtest');
     
     // Profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
