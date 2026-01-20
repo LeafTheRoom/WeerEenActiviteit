@@ -68,7 +68,7 @@ Na het toevoegen zie je automatisch wanneer het weer geschikt is!
 - ✅ Zie match scores (0-100%) voor elk moment
 - ✅ Dashboard met beste mogelijkheden
 
-**Geen API key nodig!** De app gebruikt dummy weerdata voor testing.
+
 
 ---
 

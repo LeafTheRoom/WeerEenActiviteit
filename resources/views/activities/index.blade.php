@@ -19,6 +19,24 @@
                 </div>
             @endif
 
+            @if(session('error'))
+                <div class="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-md">
+                    {{ session('error') }}
+                    @if(!Auth::user()->is_premium)
+                        <a href="{{ route('premium') }}" class="underline font-semibold ml-2">Activeer Premium</a>
+                    @endif
+                </div>
+            @endif
+
+            <div class="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
+                <p class="text-sm text-gray-700">
+                    Je hebt <strong>{{ Auth::user()->activities()->count() }}</strong> van <strong>{{ Auth::user()->max_activities }}</strong> activiteiten.
+                    @if(!Auth::user()->is_premium)
+                        <a href="{{ route('premium') }}" class="text-blue-600 hover:underline ml-2">Upgrade naar Premium</a>
+                    @endif
+                </p>
+            </div>
+
             @if($activities->isEmpty())
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6 text-center text-gray-500">
@@ -85,7 +103,7 @@
                                         <svg class="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                         </svg>
-                                        <span>{{ $activity->duration_minutes }} minuten</span>
+                                        <span>{{ $activity->duration_hours }} {{ $activity->duration_hours == 1 ? 'uur' : 'uren' }}</span>
                                     </div>
                                 </div>
 

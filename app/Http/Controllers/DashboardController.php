@@ -26,6 +26,8 @@ class DashboardController extends Controller
         $activities = $user->activities()
             ->where('is_active', true)
             ->withCount('suitableMatches')
+            ->latest()
+            ->take(3)
             ->get();
 
         // Haal de beste matches op (gesorteerd op score en datum)

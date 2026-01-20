@@ -39,7 +39,7 @@
                         <div class="mb-4">
                             <label for="location" class="block text-sm font-medium text-gray-700">Locatie *</label>
                             <input type="text" name="location" id="location" required
-                                   value="{{ old('location', 'Amsterdam') }}"
+                                   value="{{ old('location', Auth::user()->default_location ?? 'Amsterdam') }}"
                                    placeholder="bijv. Amsterdam, Rotterdam, Utrecht"
                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                             <p class="mt-1 text-sm text-gray-500">Vul de stad in waar je deze activiteit wilt doen</p>
@@ -94,11 +94,12 @@
 
                         <!-- Duur -->
                         <div class="mb-4">
-                            <label for="duration_minutes" class="block text-sm font-medium text-gray-700">Duur (minuten) *</label>
-                            <input type="number" name="duration_minutes" id="duration_minutes" required
-                                   value="{{ old('duration_minutes', 60) }}"
+                            <label for="duration_hours" class="block text-sm font-medium text-gray-700">Duur (uren) *</label>
+                            <input type="number" name="duration_hours" id="duration_hours" required
+                                   value="{{ old('duration_hours', 1) }}"
+                                   min="1" max="24"
                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                            @error('duration_minutes')
+                            @error('duration_hours')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
                         </div>

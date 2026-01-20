@@ -26,7 +26,7 @@ class WeatherService
     /**
      * Haal weersvoorspelling op voor de komende dagen.
      */
-    public function fetchForecast(string $location = null, int $days = null): array
+    public function fetchForecast(?string $location = null, ?int $days = null): array
     {
         // Use defaults if not provided
         $location = $location ?? $this->defaultLocation;
@@ -181,15 +181,30 @@ class WeatherService
         $matchCount = 0;
 
         foreach ($activities as $activity) {
-            // Haal alleen weersvoorspellingen op voor de locatie van deze activiteit
+            // Check of deze activiteit al een notificatie heeft ontvangen
+            $hasNotification = \App\Models\ActivityMatch::where('activity_id', $activity->id)
+                ->where('user_notified', true)
+                ->exists();
+
+            // Skip als er al een notificatie is verstuurd voor deze activiteit
+            if ($hasNotification) {
+                continue;
+            }
+
+            // Haal weersvoorspellingen op voor de locatie, gesorteerd op datum
             $forecasts = WeatherForecast::upcoming()
                 ->where('location', $activity->location)
+                ->orderBy('forecast_date')
+                ->orderBy('forecast_time')
                 ->get();
 
+            // Zoek de EERSTE geschikte dag
+            $firstSuitableMatch = null;
             foreach ($forecasts as $forecast) {
                 $isSuitable = $activity->matchesWeather($forecast);
                 $score = $activity->calculateMatchScore($forecast);
 
+                // Sla match op in database
                 \App\Models\ActivityMatch::updateOrCreate(
                     [
                         'activity_id' => $activity->id,
@@ -203,9 +218,20 @@ class WeatherService
                     ]
                 );
 
-                if ($isSuitable) {
-                    $matchCount++;
+                // Als dit de eerste geschikte match is, sla hem op
+                if ($isSuitable && !$firstSuitableMatch) {
+                    $firstSuitableMatch = \App\Models\ActivityMatch::where([
+                        'activity_id' => $activity->id,
+                        'weather_forecast_id' => $forecast->id,
+                    ])->first();
                 }
+            }
+
+            // Verstuur 1 notificatie voor de EERSTE geschikte dag
+            if ($firstSuitableMatch) {
+                $activity->user->notify(new \App\Notifications\ActivityMatchFound($firstSuitableMatch));
+                $firstSuitableMatch->update(['user_notified' => true]);
+                $matchCount++;
             }
         }
 

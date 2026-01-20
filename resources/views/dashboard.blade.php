@@ -36,37 +36,28 @@
                 </div>
             @endif
 
-            <!-- Welkom, "GEBRUIKER NAAM" -->
-            <div class="h1 text-center">
-                <h1 class="text-5xl font-bold text-blue-600 mb-4">WeerEenActiviteit</h1>
-                <p class="text-2xl text-gray-700">Welkom, {{ Auth::user()->name }}</p>
+            <!-- Welkom -->
+            <div class="mb-8">
+                <h1 class="text-4xl font-bold text-blue-600 mb-2">WeerEenActiviteit</h1>
+                <p class="text-xl text-gray-700">Welkom, {{ Auth::user()->name }}</p>
             </div>
+            
             <!-- Statistieken -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6">
-                        <div class="text-gray-500 text-sm">Totaal Activiteiten</div>
-                        <div class="text-3xl font-bold text-blue-600">{{ $stats['total_activities'] }}</div>
-                    </div>
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="bg-white shadow-sm sm:rounded-lg p-4">
+                    <div class="text-gray-500 text-sm">Totaal Activiteiten</div>
+                    <div class="text-2xl font-bold text-blue-600">{{ $stats['total_activities'] }}</div>
                 </div>
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6">
-                        <div class="text-gray-500 text-sm">Actieve Activiteiten</div>
-                        <div class="text-3xl font-bold text-green-600">{{ $stats['active_activities'] }}</div>
-                    </div>
-                </div>
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6">
-                        <div class="text-gray-500 text-sm">Geschikte Dagen</div>
-                        <div class="text-3xl font-bold text-purple-600">{{ $stats['suitable_matches'] }}</div>
-                    </div>
+                <div class="bg-white shadow-sm sm:rounded-lg p-4">
+                    <div class="text-gray-500 text-sm">Actieve Activiteiten</div>
+                    <div class="text-2xl font-bold text-green-600">{{ $stats['active_activities'] }}</div>
                 </div>
             </div>
 
             <!-- Mijn Activiteiten -->
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6">
-                    <h3 class="text-lg font-semibold mb-4">Recenste toegevoegde activiteit</h3>
+                    <h3 class="text-lg font-semibold mb-4">Recente Activiteiten</h3>
                     
                     @if($activities->count() > 0)
                         <div class="space-y-3">
@@ -91,11 +82,27 @@
                                                     <span class="text-gray-500">Max. Neerslag:</span>
                                                     <span class="font-medium">{{ $activity->max_precipitation }} mm</span>
                                                 </div>
-                                                <div>
-                                                    <span class="text-gray-500">Geschikte dagen:</span>
-                                                    <span class="font-medium text-green-600">{{ $activity->suitable_matches_count }}</span>
-                                                </div>
+                                                
                                             </div>
+                                            @php
+                                                $bestMatch = $activity->getBestMatchDate();
+                                            @endphp
+                                            @if($bestMatch)
+                                                <div class="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                                                    <div class="text-sm font-semibold text-green-800">Geschikte Dag Gevonden!</div>
+                                                    <div class="text-sm text-green-700 mt-1">
+                                                        <span class="font-medium">{{ \Carbon\Carbon::parse($bestMatch['date'])->isoFormat('dddd D MMMM YYYY') }}</span>
+                                                        om {{ \Carbon\Carbon::parse($bestMatch['time'])->format('H:i') }} uur
+                                                    </div>
+                                                    @if($bestMatch['weather'])
+                                                        <div class="text-xs text-green-600 mt-1">
+                                                            Temp: {{ $bestMatch['weather']->temperature }}°C | 
+                                                            Wind: {{ $bestMatch['weather']->wind_speed }} km/h | 
+                                                            Neerslag: {{ $bestMatch['weather']->precipitation }} mm
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                            @endif
                                         </div>
                                         <div class="ml-4 flex flex-col gap-2">
                                             <a href="{{ route('activities.edit', $activity) }}" class="text-sm text-blue-600 hover:underline">

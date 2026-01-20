@@ -32,6 +32,16 @@ class ActivityController extends Controller
      */
     public function create()
     {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        
+        // Check of gebruiker de limiet heeft bereikt
+        $activityCount = $user->activities()->count();
+        if ($activityCount >= $user->max_activities) {
+            return redirect()->route('activities.index')
+                ->with('error', 'Je hebt het maximale aantal activiteiten bereikt. Upgrade naar Premium voor onbeperkt activiteiten!');
+        }
+        
         return view('activities.create');
     }
 
@@ -40,6 +50,16 @@ class ActivityController extends Controller
      */
     public function store(Request $request)
     {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        
+        // Check of gebruiker de limiet heeft bereikt
+        $activityCount = $user->activities()->count();
+        if ($activityCount >= $user->max_activities) {
+            return redirect()->route('activities.index')
+                ->with('error', 'Je hebt het maximale aantal activiteiten bereikt. Upgrade naar Premium voor onbeperkt activiteiten!');
+        }
+        
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -48,12 +68,10 @@ class ActivityController extends Controller
             'max_temperature' => 'nullable|numeric|min:-50|max:50',
             'max_wind_speed' => 'nullable|numeric|min:0|max:200',
             'max_precipitation' => 'nullable|numeric|min:0|max:100',
-            'duration_minutes' => 'required|integer|min:15|max:480',
+            'duration_hours' => 'required|integer|min:1|max:24',
             'preferred_times' => 'nullable|array',
         ]);
 
-        /** @var \App\Models\User $user */
-        $user = Auth::user();
         $activity = $user->activities()->create($validated);
 
         // Haal weergegevens op voor de locatie van deze activiteit
@@ -92,7 +110,7 @@ class ActivityController extends Controller
             'max_temperature' => 'nullable|numeric|min:-50|max:50',
             'max_wind_speed' => 'nullable|numeric|min:0|max:200',
             'max_precipitation' => 'nullable|numeric|min:0|max:100',
-            'duration_minutes' => 'required|integer|min:15|max:480',
+            'duration_hours' => 'required|integer|min:1|max:24',
             'preferred_times' => 'nullable|array',
             'is_active' => 'boolean',
         ]);

@@ -47,6 +47,13 @@
             @endif
         </div>
 
+        <div>
+            <x-input-label for="default_location" value="Standaard Locatie" />
+            <x-text-input id="default_location" name="default_location" type="text" class="mt-1 block w-full" :value="old('default_location', $user->default_location)" placeholder="bijv. Amsterdam" />
+            <p class="mt-1 text-sm text-gray-500">Deze locatie wordt automatisch ingevuld bij nieuwe activiteiten</p>
+            <x-input-error class="mt-2" :messages="$errors->get('default_location')" />
+        </div>
+
         <div class="flex items-center gap-4">
             <x-primary-button>{{ __('Save') }}</x-primary-button>
 

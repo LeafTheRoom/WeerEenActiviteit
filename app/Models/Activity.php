@@ -20,7 +20,7 @@ class Activity extends Model
         'max_temperature',
         'max_wind_speed',
         'max_precipitation',
-        'duration_minutes',
+        'duration_hours',
         'is_active',
         'preferred_times',
     ];
@@ -100,7 +100,7 @@ class Activity extends Model
         }
 
         // Wind scoring
-        if ($this->max_wind_speed !== null) {
+        if ($this->max_wind_speed !== null && $this->max_wind_speed > 0) {
             $windRatio = $forecast->wind_speed / $this->max_wind_speed;
             if ($windRatio > 1) {
                 $score -= 30;
@@ -117,5 +117,50 @@ class Activity extends Model
         }
 
         return max(0, min(100, (int)$score));
+    }
+
+    /**
+     * Krijg de eerste geschikte dag waarop deze activiteit uitgevoerd kan worden.
+     */
+    public function getBestMatchDate(): ?array
+    {
+        $bestMatch = $this->matches()
+            ->where('is_suitable', true)
+            ->orderBy('match_date', 'asc')
+            ->orderBy('match_time', 'asc')
+            ->with('weatherForecast')
+            ->first();
+
+        if (!$bestMatch) {
+            return null;
+        }
+
+        return [
+            'date' => $bestMatch->match_date,
+            'time' => $bestMatch->match_time,
+            'weather' => $bestMatch->weatherForecast,
+        ];
+    }
+
+    /**
+     * Krijg alle geschikte match datums gesorteerd op score.
+     */
+    public function getSuitableMatchDates(): array
+    {
+        return $this->matches()
+            ->where('is_suitable', true)
+            ->orderBy('match_score', 'desc')
+            ->orderBy('match_date', 'asc')
+            ->with('weatherForecast')
+            ->get()
+            ->map(function ($match) {
+                return [
+                    'date' => $match->match_date,
+                    'time' => $match->match_time,
+                    'score' => $match->match_score,
+                    'weather' => $match->weatherForecast,
+                ];
+            })
+            ->toArray();
     }
 }

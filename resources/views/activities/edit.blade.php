@@ -95,11 +95,12 @@
 
                         <!-- Duur -->
                         <div class="mb-4">
-                            <label for="duration_minutes" class="block text-sm font-medium text-gray-700">Duur (minuten) *</label>
-                            <input type="number" name="duration_minutes" id="duration_minutes" required
-                                   value="{{ old('duration_minutes', $activity->duration_minutes) }}"
+                            <label for="duration_hours" class="block text-sm font-medium text-gray-700">Duur (uren) *</label>
+                            <input type="number" name="duration_hours" id="duration_hours" required
+                                   value="{{ old('duration_hours', $activity->duration_hours) }}"
+                                   min="1" max="24"
                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                            @error('duration_minutes')
+                            @error('duration_hours')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
                         </div>

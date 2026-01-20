@@ -22,7 +22,7 @@ return new class extends Migration
             $table->decimal('max_temperature', 5, 2)->nullable(); // Maximale temperatuur in °C
             $table->decimal('max_wind_speed', 5, 2)->nullable(); // Maximale windsnelheid in km/h
             $table->decimal('max_precipitation', 5, 2)->default(0); // Maximale neerslag in mm
-            $table->integer('duration_minutes')->default(60); // Duur van de activiteit in minuten
+            $table->integer('duration_hours')->default(1); // Duur van de activiteit in uren
             
             // Extra voorkeuren
             $table->boolean('is_active')->default(true);

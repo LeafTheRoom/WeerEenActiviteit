@@ -18,6 +18,21 @@
                     <x-nav-link :href="route('activities.index')" :active="request()->routeIs('activities.*')">
                         {{ __('Activiteiten') }}
                     </x-nav-link>
+                    <x-nav-link :href="route('notifications.index')" :active="request()->routeIs('notifications.*')" class="relative">
+                        {{ __('Meldingen') }}
+                        @php
+                            $unreadCount = Auth::user()->unreadNotifications()->count();
+                        @endphp
+                        @if($unreadCount > 0)
+
+                        @endif
+                    </x-nav-link>
+                    <x-nav-link :href="route('premium')" :active="request()->routeIs('premium')" class="relative">
+                        {{ __('Premium') }}
+                        @if(Auth::user()->is_premium)
+                            <span class="ml-1 text-yellow-500">[PRO]</span>
+                        @endif
+                    </x-nav-link>
                 </div>
             </div>
 
@@ -38,7 +53,7 @@
 
                     <x-slot name="content">
                         <x-dropdown-link :href="route('profile.edit')">
-                            {{ __('Profile') }}
+                            {{ __('Profiel') }}
                         </x-dropdown-link>
 
                         <!-- Authentication -->
@@ -48,7 +63,7 @@
                             <x-dropdown-link :href="route('logout')"
                                     onclick="event.preventDefault();
                                                 this.closest('form').submit();">
-                                {{ __('Log Out') }}
+                                {{ __('Uitloggen') }}
                             </x-dropdown-link>
                         </form>
                     </x-slot>
@@ -76,6 +91,17 @@
             <x-responsive-nav-link :href="route('activities.index')" :active="request()->routeIs('activities.*')">
                 {{ __('Activiteiten') }}
             </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('notifications.index')" :active="request()->routeIs('notifications.*')">
+                {{ __('Meldingen') }}
+                @php
+                    $unreadCount = Auth::user()->unreadNotifications()->count();
+                @endphp
+                @if($unreadCount > 0)
+                    <span class="ml-2 bg-red-500 text-white text-xs rounded-full px-2 py-1">
+                        {{ $unreadCount }}
+                    </span>
+                @endif
+            </x-responsive-nav-link>
         </div>
 
         <!-- Responsive Settings Options -->
@@ -87,7 +113,7 @@
 
             <div class="mt-3 space-y-1">
                 <x-responsive-nav-link :href="route('profile.edit')">
-                    {{ __('Profile') }}
+                    {{ __('Profiel') }}
                 </x-responsive-nav-link>
 
                 <!-- Authentication -->
@@ -97,7 +123,7 @@
                     <x-responsive-nav-link :href="route('logout')"
                             onclick="event.preventDefault();
                                         this.closest('form').submit();">
-                        {{ __('Log Out') }}
+                        {{ __('Uitloggen') }}
                     </x-responsive-nav-link>
                 </form>
             </div>
