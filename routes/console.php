@@ -11,5 +11,4 @@ Artisan::command('inspire', function () {
 // Schedule weather updates every 5 minutes
 Schedule::command('weather:update-matches')
     ->everyFiveMinutes()
-    ->withoutOverlapping()
-    ->onOneServer();
+    ->withoutOverlapping();

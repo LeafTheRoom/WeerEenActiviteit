@@ -78,11 +78,42 @@ class ActivityController extends Controller
         $weatherService = new WeatherService();
         $weatherService->fetchForecast($activity->location);
         
-        // Check weer matches
-        $weatherService->findActivityMatches();
+        // Check weer matches voor deze specifieke activiteit
+        $matchResult = $weatherService->findActivityMatches($activity->id);
+        
+        // Als er meteen een match gevonden is, toon popup
+        if ($matchResult['firstMatch']) {
+            $match = $matchResult['firstMatch'];
+            $matchData = $this->formatMatchData($match);
+            
+            return redirect()->route('dashboard')
+                ->with('success', 'Activiteit succesvol aangemaakt!')
+                ->with('immediate_match', $matchData);
+        }
 
         return redirect()->route('dashboard')
-            ->with('success', 'Activiteit succesvol aangemaakt!');
+            ->with('success', 'Activiteit succesvol aangemaakt!')
+            ->with('info', 'We zijn nu op zoek naar geschikte dagen voor je activiteit. Je ontvangt een melding zodra we een match vinden!');
+    }
+    
+    /**
+     * Format match data for frontend popup.
+     */
+    private function formatMatchData(\App\Models\ActivityMatch $match): array
+    {
+        $activity = $match->activity;
+        $weather = $match->weatherForecast;
+        $matchDate = \Carbon\Carbon::parse($match->match_date);
+        $matchTime = \Carbon\Carbon::parse($match->match_time);
+        
+        return [
+            'activityName' => $activity->name,
+            'date' => $matchDate->isoFormat('dddd D MMMM YYYY'),
+            'time' => $matchTime->format('H:i') . ' - ' . $matchTime->copy()->addHours($activity->duration_hours)->format('H:i') . ' uur',
+            'temperature' => $weather->temperature . '°C',
+            'windSpeed' => $weather->wind_speed . ' km/h',
+            'precipitation' => $weather->precipitation . ' mm',
+        ];
     }
 
     /**
@@ -121,8 +152,18 @@ class ActivityController extends Controller
         $weatherService = new WeatherService();
         $weatherService->fetchForecast($activity->location);
         
-        // Re-check weer matches
-        $weatherService->findActivityMatches();
+        // Re-check weer matches voor deze specifieke activiteit
+        $matchResult = $weatherService->findActivityMatches($activity->id);
+        
+        // Als er meteen een match gevonden is, toon popup
+        if ($matchResult['firstMatch']) {
+            $match = $matchResult['firstMatch'];
+            $matchData = $this->formatMatchData($match);
+            
+            return redirect()->route('dashboard')
+                ->with('success', 'Activiteit bijgewerkt!')
+                ->with('immediate_match', $matchData);
+        }
 
         return redirect()->route('dashboard')
             ->with('success', 'Activiteit bijgewerkt!');

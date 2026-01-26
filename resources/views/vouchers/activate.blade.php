@@ -26,7 +26,6 @@
                         <h3 class="text-lg font-semibold mb-2">Premium Voordelen</h3>
                         <ul class="list-disc list-inside space-y-2 text-gray-700">
                             <li>Maximaal 20 activiteiten (ipv 5)</li>
-                            <li>Activiteiten herhaalbaar maken</li>
                             <li>Lifetime toegang</li>
                         </ul>
                     </div>

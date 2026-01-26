@@ -61,4 +61,48 @@ class NotificationController extends Controller
 
         return redirect()->back()->with('success', 'Melding verwijderd');
     }
+
+    /**
+     * Check for new match notifications (API endpoint).
+     */
+    public function checkNewMatches(Request $request)
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        
+        // Haal ongelezen ActivityMatchFound notificaties op
+        $newMatches = $user->unreadNotifications()
+            ->where('type', 'App\\Notifications\\ActivityMatchFound')
+            ->get();
+
+        if ($newMatches->isEmpty()) {
+            return response()->json([
+                'hasNewMatches' => false,
+                'matches' => []
+            ]);
+        }
+
+        $matches = $newMatches->map(function ($notification) {
+            $data = $notification->data;
+            $matchDate = \Carbon\Carbon::parse($data['match_date']);
+            $matchTime = \Carbon\Carbon::parse($data['match_time']);
+            
+            // Markeer als gelezen
+            $notification->markAsRead();
+            
+            return [
+                'activityName' => $data['activity_name'] ?? 'Onbekend',
+                'date' => $matchDate->isoFormat('dddd D MMMM YYYY'),
+                'time' => $matchTime->format('H:i') . ' - ' . $matchTime->copy()->addHours($data['duration_hours'] ?? 1)->format('H:i') . ' uur',
+                'temperature' => $data['temperature'] ?? 'N/A',
+                'windSpeed' => $data['wind_speed'] ?? 'N/A',
+                'precipitation' => $data['precipitation'] ?? 'N/A',
+            ];
+        });
+
+        return response()->json([
+            'hasNewMatches' => true,
+            'matches' => $matches
+        ]);
+    }
 }

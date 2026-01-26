@@ -254,11 +254,21 @@ class WeatherService
 
     /**
      * Vind matches tussen activiteiten en weer.
+     * 
+     * @param int|null $specificActivityId Optioneel: zoek alleen matches voor deze specifieke activiteit
+     * @return array ['count' => int, 'firstMatch' => ActivityMatch|null]
      */
-    public function findActivityMatches(): int
+    public function findActivityMatches(?int $specificActivityId = null): array
     {
-        $activities = \App\Models\Activity::where('is_active', true)->get();
+        $query = \App\Models\Activity::where('is_active', true);
+        
+        if ($specificActivityId) {
+            $query->where('id', $specificActivityId);
+        }
+        
+        $activities = $query->get();
         $matchCount = 0;
+        $firstMatchFound = null;
 
         Log::info('Starting activity matching', [
             'total_activities' => $activities->count()
@@ -377,6 +387,11 @@ class WeatherService
                     $firstSuitableMatch->update(['user_notified' => true]);
                     $matchCount++;
                     
+                    // Sla de allereerste match op voor directe feedback
+                    if (!$firstMatchFound) {
+                        $firstMatchFound = $firstSuitableMatch;
+                    }
+                    
                     Log::info('Notification sent', [
                         'activity_id' => $activity->id,
                         'user_email' => $activity->user->email
@@ -394,7 +409,10 @@ class WeatherService
             'notifications_sent' => $matchCount
         ]);
 
-        return $matchCount;
+        return [
+            'count' => $matchCount,
+            'firstMatch' => $firstMatchFound
+        ];
     }
 
     /**

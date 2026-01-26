@@ -16,9 +16,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     
-    // Weather update
-    Route::post('/weather/update', [DashboardController::class, 'updateWeather'])->name('weather.update');
-    
     // Activities
     Route::resource('activities', ActivityController::class)->only(['index', 'create', 'store', 'show', 'edit', 'update', 'destroy']);
     
@@ -27,16 +24,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.readAll');
     Route::delete('/notifications/{id}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
+    Route::get('/api/check-notifications', [NotificationController::class, 'checkNewMatches'])->name('notifications.check');
     
     // Vouchers
     Route::get('/premium', [VoucherController::class, 'showActivationForm'])->name('premium');
     Route::post('/premium/generate', [VoucherController::class, 'generateCode'])->name('premium.generate');
     Route::post('/voucher/activate', [VoucherController::class, 'activate'])->name('voucher.activate');
-    
-    // Mail Testing (Development)
-    Route::get('/mail/preview', [MailTestController::class, 'preview'])->name('mail.preview');
-    Route::post('/mail/test', [MailTestController::class, 'send'])->name('mail.test.send');
-    Route::get('/mail/send-test', [MailTestController::class, 'sendTest'])->name('mail.sendtest');
     
     // Profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

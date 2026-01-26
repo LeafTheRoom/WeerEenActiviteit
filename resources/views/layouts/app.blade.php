@@ -61,5 +61,146 @@
                 </div>
             </div>
         </div>
+
+        <!-- Match Found Modal -->
+        <div x-data="matchNotificationModal()" 
+             @match-found.window="handleMatchFound($event.detail)"
+             x-show="showModal"
+             x-cloak
+             class="fixed inset-0 z-50 overflow-y-auto"
+             style="display: none;">
+            <!-- Backdrop -->
+            <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+                 @click="closeModal()"></div>
+
+            <!-- Modal -->
+            <div class="flex items-center justify-center min-h-screen p-4">
+                <div @click.away="closeModal()" 
+                     x-transition:enter="transition ease-out duration-300"
+                     x-transition:enter-start="opacity-0 transform scale-90"
+                     x-transition:enter-end="opacity-100 transform scale-100"
+                     x-transition:leave="transition ease-in duration-200"
+                     x-transition:leave-start="opacity-100 transform scale-100"
+                     x-transition:leave-end="opacity-0 transform scale-90"
+                     class="relative bg-white rounded-lg shadow-xl max-w-lg w-full p-6">
+                    
+                    <!-- Success Icon -->
+                    <div class="flex items-center justify-center w-16 h-16 mx-auto bg-green-100 rounded-full mb-4">
+                        <svg class="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </div>
+
+                    <!-- Title -->
+                    <h3 class="text-2xl font-bold text-center text-gray-900 mb-2">
+                        Geschikte Dag Gevonden! 🎉
+                    </h3>
+
+                    <!-- Activity Name -->
+                    <p class="text-center text-lg font-semibold text-blue-600 mb-4" x-text="matchData.activityName"></p>
+
+                    <!-- Match Details -->
+                    <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                        <div class="space-y-2">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Datum:</span>
+                                <span class="font-semibold" x-text="matchData.date"></span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Tijd:</span>
+                                <span class="font-semibold" x-text="matchData.time"></span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Temperatuur:</span>
+                                <span class="font-semibold" x-text="matchData.temperature + '°C'"></span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Wind:</span>
+                                <span class="font-semibold" x-text="matchData.windSpeed + ' km/h'"></span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Neerslag:</span>
+                                <span class="font-semibold" x-text="matchData.precipitation + ' mm'"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Close Button -->
+                    <button @click="closeModal()" 
+                            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition">
+                        Geweldig!
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notification Checker -->
+        @auth
+        <script>
+            function matchNotificationModal() {
+                return {
+                    showModal: false,
+                    matchData: {
+                        activityName: '',
+                        date: '',
+                        time: '',
+                        temperature: '',
+                        windSpeed: '',
+                        precipitation: ''
+                    },
+                    handleMatchFound(data) {
+                        this.matchData = data;
+                        this.showModal = true;
+                    },
+                    closeModal() {
+                        this.showModal = false;
+                        // Sla op dat deze match is getoond en weggeklikt
+                        if (this.matchData.activityName) {
+                            const matchKey = `match_shown_${this.matchData.activityName}_${this.matchData.date}`;
+                            localStorage.setItem(matchKey, 'true');
+                        }
+                    }
+                }
+            }
+
+            // Check voor nieuwe notificaties elke 30 seconden
+            let lastNotificationCheck = Date.now();
+            
+            function checkForNewMatches() {
+                fetch('/api/check-notifications', {
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.hasNewMatches && data.matches) {
+                        data.matches.forEach(match => {
+                            // Check of deze match al eerder is getoond
+                            const matchKey = `match_shown_${match.activityName}_${match.date}`;
+                            const alreadyShown = localStorage.getItem(matchKey);
+                            
+                            // Toon alleen als nog niet eerder getoond
+                            if (!alreadyShown) {
+                                window.dispatchEvent(new CustomEvent('match-found', {
+                                    detail: match
+                                }));
+                            }
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking for matches:', error);
+                });
+            }
+
+            // Check direct bij laden en daarna elke 30 seconden
+            document.addEventListener('DOMContentLoaded', () => {
+                checkForNewMatches();
+                setInterval(checkForNewMatches, 30000);
+            });
+        </script>
+        @endauth
     </body>
 </html>

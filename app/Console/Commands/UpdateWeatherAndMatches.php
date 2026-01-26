@@ -46,10 +46,10 @@ class UpdateWeatherAndMatches extends Command
         
         // Vind nieuwe matches en verstuur notificaties
         $this->info('Finding activity matches...');
-        $matchCount = $weatherService->findActivityMatches();
+        $matchResult = $weatherService->findActivityMatches();
         
         $this->info('✅ Weather update complete!');
-        $this->info('📧 New notifications sent: ' . $matchCount);
+        $this->info('📧 New notifications sent: ' . $matchResult['count']);
         
         return Command::SUCCESS;
     }

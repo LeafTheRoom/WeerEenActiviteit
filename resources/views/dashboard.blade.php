@@ -4,20 +4,9 @@
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 {{ __('Dashboard') }}
             </h2>
-            <div class="flex gap-2">
-                <form action="{{ route('weather.update') }}" method="POST" class="inline">
-                    @csrf
-                    <button type="submit" class="inline-flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-700">
-                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                        </svg>
-                        Weer Updaten
-                    </button>
-                </form>
-                <a href="{{ route('activities.create') }}" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700">
-                    + Nieuwe Activiteit
-                </a>
-            </div>
+            <a href="{{ route('activities.create') }}" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700">
+                + Nieuwe Activiteit
+            </a>
         </div>
     </x-slot>
 
@@ -136,4 +125,24 @@
             </div>
         </div>
     </div>
-</x-app-layout>
+    
+    <!-- Trigger immediate match popup als er een directe match is gevonden -->
+    @if (session('immediate_match'))
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                // Wacht tot Alpine.js beschikbaar is
+                setTimeout(() => {
+                    const matchData = @json(session('immediate_match'));
+                    
+                    // Voor immediate matches (nieuw toegevoegde activiteit), altijd tonen
+                    // Reset eventuele eerdere localStorage voor deze match
+                    const matchKey = `match_shown_${matchData.activityName}_${matchData.date}`;
+                    localStorage.removeItem(matchKey);
+                    
+                    window.dispatchEvent(new CustomEvent('match-found', {
+                        detail: matchData
+                    }));
+                }, 100);
+            });
+        </script>
+    @endif</x-app-layout>
